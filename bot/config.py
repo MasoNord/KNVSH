@@ -25,6 +25,6 @@ settings = Settings()
 bot = Bot(token=settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 database_url = settings.DB_URL
 dp = Dispatcher()
-admings = settings.ADMIN_IDS
+admins = settings.ADMIN_IDS
 
 logging.basicConfig(level=logging.INFO, format=settings.FORMAT_LOG)
