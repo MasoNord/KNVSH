@@ -1,8 +1,8 @@
 # KNVSH
-Телеграм бот для отопражения сведений основных и дополнительных образовательных программах, реализуемых
+Телеграм бот для отбражения сведений основных и дополнительных образовательных программах, реализуемых
 организациями, расположенными на территории Санкт-Петербурга
 
-# Рабодчие Данные
+# Рабочие Данные
 Информация о мероприятиях, проводимых научными и образовательными организациями СанктПетербурга
 
 ```
@@ -23,12 +23,62 @@ https://researchinspb.ru/api/v1/public/vacancy/
 - alembic
 - PostgreSQL
 
-# Наполнение .env файла
+# Структура проекта
+
+```
+project
+│
+├── bot/
+│   ├── admin/
+│   ├── dao/
+│   ├── migrations/
+│   ├── user/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+├── .env
+├── README.md
+├── requirements.txt
+```
+
+# Установка
+1. Колнировать репозиторий по следующуей ссылке:
+```
+https://github.com/MasoNord/KNVSH.git
+```
+2. Перейти в директорию проекта knvsh:
+```
+cd KNVSH
+```
+3. Создать и активировать виртуальное окружение:
+```
+python -m venv venv
+
+# Для Linux
+source venv/bin/activate
+
+# Для Windows
+venv\Scriptcs\activate
+```
+
+4. Установить необходимые зависимости через следующую команду:
+```
+pip install -r requirements.txt
+```
+
+5. Создать файл `.env` в корне проекта:
 ```
 # Bot Configuration
 BOT_TOKEN=<Your Bot Token>
+ADMIN_IDS=<Your Admins lists>
 
 # Database Configuration
-ADMIN_IDS=<Your Admins lists>
 DB_URL=<Your database specific url>
+```
+
+6. Получить токен бота через @BotFather и вставить его в `.env`
+
+7. Запустить бота, для этого выполняем команду с корневой папки:
+```
+python -m bot.main
 ```
