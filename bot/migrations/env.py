@@ -5,7 +5,7 @@ from sqlalchemy import pool
 from bot.config import database_url
 from alembic import context
 from bot.dao.database import Base 
-from bot.dao.models import User
+from bot.dao.models import User, Event, MemeberStatus, OrganizerPhone, Period, Coordinate
 
 config = context.config
 
