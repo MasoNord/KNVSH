@@ -47,10 +47,12 @@ async def main():
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
 
-        # Запуск бота в режиме long polling
+    # Запуск бота в режиме long polling
+    # current_index - Индекс для перемещение по списку полученных событий
+    # adjust_events - Список для хранения списков с событимями разбитыми по группам
     try:
         await bot.delete_webhook(drop_pending_updates=True)
-        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), current_index=0)
     finally:
         await bot.session.close()
 

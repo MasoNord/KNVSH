@@ -1,5 +1,6 @@
-from aiogram.types import InlineKeyboardMarkup, ReplyKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+import logging
 
 from bot.config import settings
 
@@ -14,30 +15,25 @@ def main_user_kb(user_id: int) -> InlineKeyboardMarkup:
 
 def get_events_kb(events, start) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    # keyboards = []
-    # temp = []
-
-    # for i in range(len(events)):
-    #     if len(temp) == 5:
-    #         keyboards.append(temp)
-    #         temp = []
-    #     else:
-    #         temp.append(events[i])
-        
-
-    # for i in range(keyboards[start]):
-    #     adjust_elements.append(1)
-    #     kb.button(text=keyboards[start][i].title, callback_data=f"get_event_by_{i}")
-
     adjust_elements = []
-    for i in range(len(events)):
+    for i in range(len(events[start])):
         adjust_elements.append(1)
-        kb.button(text=f"{events[i].title}", callback_data=f"get_event_by_{i}")
+        kb.button(text=f"{events[start][i]}", callback_data=f"get_event_by_{i}")
 
     adjust_elements.append(3)
-    kb.button(text="⬅️", callback_data="back_to_list")
-    kb.button(text=f"{start}/{len(events)}", callback_data="reminder")
-    kb.button(text="➡️", callback_data="forward_to_list")
+
+    if start == 0:
+        kb.button(text="❌", callback_data="back_to_list_denied")
+    else:
+        kb.button(text="⬅️", callback_data="back_to_list")
+
+    kb.button(text=f"{start + 1}/{len(events)}", callback_data="reminder")
+    
+    if start == len(events) - 1:
+        kb.button(text="❌", callback_data="forward_to_list_denied")
+    else:
+        kb.button(text="➡️", callback_data="forward_to_list")
+    
     adjust_elements.append(1)
     kb.button(text="🏠 На главную", callback_data="home")
 

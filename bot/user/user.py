@@ -6,9 +6,10 @@ from bot.admin.utils import process_del_text_message
 from bot.dao.dao import UserDAO, EventDAO
 from bot.user.schemas import TelegramIDModel, UserModel
 from bot.user.kbs import main_user_kb, get_events_kb
+from bot.dao.models import Event
 
 user_router = Router()
-
+adjust_events = []
 
 @user_router.message(CommandStart())
 async def cmd_start(message: Message, session_with_commit: AsyncSession):
@@ -46,11 +47,57 @@ async def home(call: CallbackQuery):
     )
 
 @user_router.callback_query(F.data == "get_events")
-async def get_events(call: CallbackQuery, session_with_commit: AsyncSession):
+async def get_events(call: CallbackQuery, session_with_commit: AsyncSession, current_index: int):
     await call.message.delete()
     events = await EventDAO.find_all(session=session_with_commit, filters=None)
+    temp = []
+    for event in events:
+        if len(temp) == 5:
+            adjust_events.append(temp)
+            temp = []
+        else:
+            temp.append(event.title)
+    
+    if len(temp) != 0: adjust_events.append(temp)
+    await call.message.answer(
+        text = "Список доступных мероприятий",
+        reply_markup=get_events_kb(events=adjust_events, start=current_index)
+    )
+
+@user_router.callback_query(F.data == "forward_to_list")
+async def forward_to_list(call: CallbackQuery, current_index: int):
+    await call.message.delete()
+    if (current_index + 1) != len(adjust_events):
+        current_index += 1
 
     await call.message.answer(
         text = "Список доступных мероприятий",
-        reply_markup=get_events_kb(events=events, start=0)
+        reply_markup=get_events_kb(events=adjust_events, start=current_index)
     )
+
+@user_router.callback_query(F.data == "back_to_list")
+async def back_to_list(call: CallbackQuery, current_index: int):
+    await call.message.delete()
+    if (current_index - 1) != -1:
+        current_index -= 1
+
+    await call.message.answer(
+        text = "Список доступных мероприятий",
+        reply_markup=get_events_kb(events=adjust_events, start=current_index)
+    )
+
+# @user_router.callback_query(F.data == "back_to_list_denied")
+# async def back_to_list_denied(call: CallbackQuery, current_index: int):
+#     await call.answer("Доступ назад ограничен")
+#     await call.message.answer(
+#         text = "Список доступных мероприятий",
+#         reply_markup=get_events_kb(events=adjust_events, start=current_index)
+#     )
+
+# @user_router.callback_query(F.data == "forward_to_list_denied")
+# async def back_to_list_denied(call: CallbackQuery, current_index: int):
+#     await call.answer("Доступ вперед ограничен")
+#     await call.message.answer(
+#         text = "Список доступных мероприятий",
+#         reply_markup=get_events_kb(events=adjust_events, start=current_index)
+#     )

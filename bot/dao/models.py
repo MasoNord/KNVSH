@@ -55,7 +55,8 @@ class Event(Base):
 
 
 class MemeberStatus(Base):
-    id: Mapped[str] = mapped_column(String, unique=True, nullable=False, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False, primary_key=True, autoincrement='auto')
+    member_status_name_eng: Mapped[str] = mapped_column(String, nullable=False)
     member_status_name: Mapped[str] = mapped_column(String, nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey("event.id"))
 
@@ -72,6 +73,10 @@ class Period(Base):
 
 class Coordinate(Base):
     id: Mapped[int] = mapped_column(BigInteger, nullable=False, primary_key=True, autoincrement='auto')
-    longitude: Mapped[float] = mapped_column(Double, nullable=False)
-    latitude: Mapped[float] = mapped_column(Double, nullable=False)
+    longitude: Mapped[str] = mapped_column(String, nullable=False)
+    latitude: Mapped[str] = mapped_column(String, nullable=False)
     event_id: Mapped[int] = mapped_column(ForeignKey("event.id"))
+
+
+# class Vacancy(Base):
+#     id: Mapped[int] = mapped_column(BigInteger, nullable=False, primary_key=True, autoincrement='auto')
