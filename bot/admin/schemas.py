@@ -2,7 +2,8 @@
 from pydantic import BaseModel, Field, ConfigDict
 import datetime
 
-class EventModelID(BaseModel):
+class EventModelTitle(BaseModel):
+    title: str | None
     model_config = ConfigDict(from_attributes=True)
 
 class OrganizerPhoneModelID(BaseModel):
@@ -14,7 +15,7 @@ class PeriodModelID(BaseModel):
 class CoordinateModelID(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-class EventModel(EventModelID):
+class EventModel(EventModelTitle):
     isFavorite: bool | None
     organizer: str | None
     organizer_address: str | None
@@ -37,7 +38,7 @@ class EventModel(EventModelID):
     registration_comment: str | None
     place_number: str | None
     is_available: bool | None
-    title: str | None
+    # title: str | None
     title_eng: str | None
     cypher: str | None
     published_at: str | None
@@ -46,7 +47,7 @@ class EventModel(EventModelID):
     typeof: str | None
 
 class MemeberStatusModel(BaseModel):
-    id: str
+    member_status_name_eng: str
     member_status_name: str
     event_id: int | None
 
@@ -60,6 +61,6 @@ class PeriodModel(PeriodModelID):
     event_id: int | None
 
 class CoordinateModel(CoordinateModelID):
-    longitude: float
-    latitude: float
+    longitude: str
+    latitude: str
     event_id: int | None

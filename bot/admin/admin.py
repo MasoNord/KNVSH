@@ -4,9 +4,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import admins
-from bot.admin.kbs import admin_kb, add_events_kb, cancel_kb_inline
+from bot.admin.kbs import admin_kb, add_events_kb, cancel_kb_inline, continue_add_new_events
 from bot.admin.utils import proecess_get_url_request, create_event_model_from_json, create_period_mode_from_json, create_memeber_status_model_from_json, create_coordinate_model_from_json
 from bot.dao.dao import EventDAO, MemeberStatusDAO, CoordinateDAO, PeriodDAO
+from bot.admin.schemas import EventModelTitle
 
 admin_router = Router()
 
@@ -55,34 +56,64 @@ async def admin_process_add_events_by_url(message: Message, state: FSMContext,  
             text="Что-то пошло не так, попробуйте загрузить ссылку еще раз, либо выбирете другую"
         )
     
-    while True:
-        values = python_obj['results']
-        for value in values:
-            event = await create_event_model_from_json(value)
-            event_instance = await EventDAO.add(session=session_with_commit, values=event)
+    # while True:
+    #     values = python_obj['results']
+    #     for value in values:
+    #         event = await create_event_model_from_json(value)
+    #         event_instance = await EventDAO.add(session=session_with_commit, values=event)
 
-            periods = await create_period_mode_from_json(value, event_instance.id)
-            member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
-            coordinates = await create_coordinate_model_from_json(value, event_instance.id)
+    #         periods = await create_period_mode_from_json(value, event_instance.id)
+    #         member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
+    #         coordinates = await create_coordinate_model_from_json(value, event_instance.id)
 
-            for period in periods:
-                await PeriodDAO.add(session=session_with_commit, values=period)
+    #         for period in periods:
+    #             await PeriodDAO.add(session=session_with_commit, values=period)
 
-            for member in member_statuses:
-                await MemeberStatusDAO.add(session=session_with_commit, values=member)
+    #         for member in member_statuses:
+    #             await MemeberStatusDAO.add(session=session_with_commit, values=member)
             
-            for coord in coordinates:
-                await CoordinateDAO.add(session=session_with_commit, values=coord)
+    #         for coord in coordinates:
+    #             await CoordinateDAO.add(session=session_with_commit, values=coord)
 
-        if python_obj['next'] is not None:
-            python_obj = await proecess_get_url_request(python_obj['next'])
-        else:
-            break
+    #     if python_obj['next'] is not None:
+    #         python_obj = await proecess_get_url_request(python_obj['next'])
+    #     else:
+    #         break
+    
+    values = python_obj['results']
+    count = 0
+    msg = ""
+    for value in values:
+        event = await create_event_model_from_json(value)
 
+        if await EventDAO.find_one_or_none(session=session_with_commit, filters=EventModelTitle(title=event.title)):
+            msg += f"Мероприятие {event.title} уже существует в базе данных\n"
+            continue
+
+        event_instance = await EventDAO.add(session=session_with_commit, values=event)
+
+        periods = await create_period_mode_from_json(value, event_instance.id)
+        member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
+        coordinates = await create_coordinate_model_from_json(value, event_instance.id)
+
+        for period in periods:
+            await PeriodDAO.add(session=session_with_commit, values=period)
+
+        for member in member_statuses:
+            await MemeberStatusDAO.add(session=session_with_commit, values=member)
+        
+        for coord in coordinates:
+            await CoordinateDAO.add(session=session_with_commit, values=coord)
+
+        msg += f"Мероприятие {event.title} успешно было доавблено в базу\n"
+        count += 1
+    msg += f"Всего добавлнео {count} новых мероприятий"
+    
     await message.answer (
-        text=f"Спасибо большое запредоставленный {url}",
-        reply_markup=admin_kb()
+        text=msg,
+        reply_markup=continue_add_new_events()
     )
+
 
 @admin_router.callback_query(F.data == "cancel", F.from_user.id.in_(admins))
 async def admin_process_cancel(call: CallbackQuery, state: FSMContext):

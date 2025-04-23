@@ -38,7 +38,7 @@ async def proecess_get_url_request(url: str):
 async def create_event_model_from_json(python_obj) -> EventModel:
     value = EventModel (
         isFavorite=python_obj['isFavorite'],
-        organizer=python_obj['organizer']['name'],
+        organizer=python_obj['organizer']['name'] if python_obj['organizer'] is not None else None,
         organizer_address=python_obj['organizerAddress'],
         organizer_address_eng=python_obj['organizerAddressEng'],
         organizer_supervisor_fio=python_obj['organizerSupervisorFio'],
@@ -48,13 +48,13 @@ async def create_event_model_from_json(python_obj) -> EventModel:
         organizer_telegram=python_obj['organizerTelegram'],
         organizer_email=python_obj['organizerEmail'],
         free_places=python_obj['freePlaces'],
-        event_type=python_obj['type']['name'],
+        event_type=python_obj['type']['name'] if python_obj['type'] is not None else None,
         is_active=python_obj['isActive'],
-        event_format=python_obj['eventFormat']['name'],
-        status=python_obj['status']['name'],
+        event_format=python_obj['eventFormat']['name'] if python_obj['eventFormat'] is not None else None,
+        status=python_obj['status']['name'] if python_obj['status'] is not None else None,
         location=python_obj['location'],
         location_eng=python_obj['locationEng'],
-        registration_status=python_obj['registrationStatus']['name'],
+        registration_status=python_obj['registrationStatus']['name'] if python_obj['registrationStatus'] is not None else None,
         registration_comment=python_obj['registrationComment'],
         place_number=python_obj['placesNumber'],
         is_available=python_obj['isAvailable'],
@@ -62,9 +62,9 @@ async def create_event_model_from_json(python_obj) -> EventModel:
         title_eng=python_obj['titleEng'],
         cypher=python_obj['cypher'],
         published_at=python_obj['publishedAt'],
-        cover_url=python_obj['cover']['url'],
+        cover_url=python_obj['cover']['url'] if python_obj['cover'] is not None else None,
         parent=python_obj['parent'],
-        typeof=python_obj['typeof']['name']
+        typeof=python_obj['typeof']['name'] if python_obj['typeof'] is not None else None
     )
 
     return value
@@ -74,7 +74,7 @@ async def create_memeber_status_model_from_json(python_obj, event_id) -> List[Me
 
     for value in python_obj['membersStatuses']:
         member = MemeberStatusModel(
-            id=value["id"],
+            member_status_name_eng=value["id"],
             member_status_name=value["name"],
             event_id=event_id
         )
@@ -101,8 +101,8 @@ async def create_coordinate_model_from_json(python_obj, event_id) -> List[Coordi
 
     for value in python_obj['coordinates']:
         coord = CoordinateModel(
-            longitude=value[0],
-            latitude=value[1],
+            longitude=str(value[0]),
+            latitude=str(value[1]),
             event_id=event_id
         )
         list_value.append(coord)

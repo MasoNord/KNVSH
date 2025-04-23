@@ -33,3 +33,10 @@ def cancel_kb_inline() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text="Отмена", callback_data="cancel")
     return kb.as_markup()
+
+def continue_add_new_events() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Добавить еще", callback_data="add_events")
+    kb.button(text="⚙️ Админ панель", callback_data="admin_panel")
+    kb.adjust(2)
+    return kb.as_markup()
