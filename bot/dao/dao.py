@@ -6,7 +6,8 @@ from sqlalchemy.future import select
 from sqlalchemy import update as sqlalchemy_update, delete as sqlalchemy_delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.dao.database import Base
-from bot.dao.models import User, Event, MemeberStatus, OrganizerPhone, Period, Coordinate
+from bot.dao.models import User, Event, MemeberStatus, OrganizerPhone, Period, Coordinate, \
+Vacancy, Organization, Schedule, MainVacancyCompetency, DesirableVacancyCompetency, PersonalQuality, Profession
 
 
 T = TypeVar("T", bound=Base)
@@ -79,3 +80,24 @@ class PeriodDAO(BaseDAO[Period]):
 
 class CoordinateDAO(BaseDAO[Coordinate]):
     model = Coordinate
+
+class VacancyDAO(BaseDAO[Vacancy]):
+    model = Vacancy
+
+class OrganizationDAO(BaseDAO[Organization]):
+    model = Organization
+
+class ScheduleDAO(BaseDAO[Schedule]):
+    model = Schedule
+
+class MainVacancyCompetencyDAO(BaseDAO[MainVacancyCompetency]):
+    model = MainVacancyCompetency
+
+class DesirableVacancyCompetencyDAO(BaseDAO[DesirableVacancyCompetency]):
+    model = DesirableVacancyCompetency
+
+class PersonalQualityDAO(BaseDAO[PersonalQuality]):
+    model = PersonalQuality
+
+class ProfessionDAO(BaseDAO[Profession]):
+    model = Profession

@@ -1,10 +1,12 @@
 import logging
 import aiohttp
 import json
-from typing import List
+from typing import List, Dict, Any
+from sqlalchemy.orm import Session
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from bot.admin.schemas import EventModel, MemeberStatusModel, PeriodModel, CoordinateModel
+from bot.admin.schemas import EventModel, MemeberStatusModel, PeriodModel, CoordinateModel, OrganizationModel, VacancyModel, \
+ScheduleModel, MainVacancyCompetencyModel, DesirableVacancyCompetencyModel, PersonalQualityModel, ProfessionModel
 
 from bot.config import bot
 
@@ -107,4 +109,123 @@ async def create_coordinate_model_from_json(python_obj, event_id) -> List[Coordi
         )
         list_value.append(coord)
 
+    return list_value
+
+async def create_vacancy_model_from_json(python_obj) -> VacancyModel:
+    value = VacancyModel (
+        name=python_obj["name"],
+        employment_type=python_obj["employmentType"]["name"] if python_obj["employmentType"] else None,
+        experience=python_obj["experience"]["name"] if python_obj["experience"] else None,
+        education_level=python_obj["educationLevel"]["name"] if python_obj["educationLevel"] else None,
+        salary_from=python_obj["salaryFrom"],
+        salary_up_to=python_obj["salaryUpTo"],
+        before_tax=python_obj["beforeTax"],
+        description=python_obj["description"],
+        email=python_obj["email"],
+        contact_name=python_obj["contactName"],
+        phone=python_obj["phone"],
+        address=python_obj["address"]["name"] if python_obj["address"] else None,
+        is_blocked=python_obj["isBlocked"],
+        published_at=python_obj["publishedAt"],
+        is_favorite=python_obj["isFavorite"],
+        hh_url=python_obj["hhUrl"]
+    )
+    return value
+
+async def create_organization_model_from_json(vacancy_id, python_obj) -> OrganizationModel:
+    value = OrganizationModel (
+        vacancy_id=vacancy_id,
+        full_title=python_obj["organization"]["fullTitle"] if python_obj["organization"] else None,
+        full_title_eng=python_obj["organization"]["fullTitleEng"] if python_obj["organization"] else None,
+        short_title=python_obj["organization"]["shortTitle"] if python_obj["organization"] else None,
+        short_title_eng=python_obj["organization"]["shortTitleEng"] if python_obj["organization"] else None,
+        description=python_obj["organization"]["description"] if python_obj["organization"] else None,
+        description_eng=python_obj["organization"]["descriptionEng"] if python_obj["organization"] else None,
+        supervisor_fio=python_obj["organization"]["supervisorFio"] if python_obj["organization"] else None,
+        supervisor_fio_eng=python_obj["organization"]["supervisorFioEng"] if python_obj["organization"] else None,
+        supervisor_job_title=python_obj["organization"]["supervisorFioEng"] if python_obj["organization"] else None,
+        supervisor_job_title_eng=python_obj["organization"]["supervisorJobTitleEng"] if python_obj["organization"] else None,
+        status=python_obj["organization"]["status"] if python_obj["organization"] else None,
+        is_participant=python_obj["organization"]["isParticipant"] if python_obj["organization"] else None,
+        is_published=python_obj["organization"]["isPublished"] if python_obj["organization"] else None,
+        inn=python_obj["organization"]["inn"] if python_obj["organization"] else None,
+        ogrn=python_obj["organization"]["ogrn"] if python_obj["organization"] else None,
+        address_organization=python_obj["organization"]["address"] if python_obj["organization"] else None,
+        address_eng=python_obj["organization"]["addressEng"] if python_obj["organization"] else None,
+        phone=python_obj["organization"]["phone"] if python_obj["organization"] else None,
+        email=python_obj["organization"]["email"] if python_obj["organization"] else None,
+        vk=python_obj["organization"]["vk"] if python_obj["organization"] else None,
+        telegram=python_obj["organization"]["telegram"] if python_obj["organization"] else None,
+        site=python_obj["organization"]["site"] if python_obj["organization"] else None,
+        cover=python_obj["organization"]["cover"] if python_obj["organization"] else None,
+        created_vacancy_at=python_obj["organization"]["createdAt"] if python_obj["organization"] else None,
+        updated_vacancy_at=python_obj["organization"]["updatedAt"] if python_obj["organization"] else None,
+        published_at=python_obj["organization"]["publishedAt"] if python_obj["organization"] else None,
+        licenze=(python_obj["organization"]["licenze"]["url"] if python_obj["organization"]["licenze"] else None) if python_obj["organization"] else None,
+        accreditation_certificate=(python_obj["organization"]["accreditationCertificate"]["url"] if python_obj["organization"]["accreditationCertificate"] else None) if python_obj["organization"] else None,
+        educational_type=(python_obj["organization"]["educationalType"]["url"] if python_obj["organization"]["educationalType"] else None) if python_obj["organization"] else None,
+        is_educational=python_obj["organization"]["isEducational"] if python_obj["organization"] else None,
+        is_head=python_obj["organization"]["isHead"] if python_obj["organization"] else None,
+        logo=python_obj["logo"]["url"] if python_obj["logo"] else None,
+        stie=python_obj["site"],
+        name=python_obj["name"],
+        address=python_obj["address"]
+    )
+
+    return value
+
+
+async def create_schedule_model_from_json(vacancy_id, python_obj) -> List[ScheduleModel]:
+    list_value = []
+
+    for schedule in python_obj["schedule"]:
+        value = ScheduleModel(
+            name=schedule["name"],
+            vacancy_id=vacancy_id
+        )
+        list_value.append(value)
+    return list_value
+
+async def create_main_vacancy_competency_model_from_json(vacancy_id, python_obj) -> List[MainVacancyCompetencyModel]:
+    list_value = []
+
+    for schedule in python_obj["mainVacancyCompetencies"]:
+        value = ScheduleModel(
+            name=schedule["name"],
+            vacancy_id=vacancy_id
+        )
+        list_value.append(value)
+    return list_value
+
+async def create_desirable_vacancy_competency_model_from_json(vacancy_id, python_obj) -> List[DesirableVacancyCompetencyModel]:
+    list_value = []
+
+    for schedule in python_obj["desirableVacancyCompetencies"]:
+        value = ScheduleModel(
+            name=schedule["name"],
+            vacancy_id=vacancy_id
+        )
+        list_value.append(value)
+    return list_value
+
+async def create_personal_qualities_model_from_json(vacancy_id, python_obj) -> List[PersonalQualityModel]:
+    list_value = []
+
+    for schedule in python_obj["personalQualities"]:
+        value = ScheduleModel(
+            name=schedule["name"],
+            vacancy_id=vacancy_id
+        )
+        list_value.append(value)
+    return list_value
+
+async def create_profession_model_from_json(vacancy_id, python_obj) -> List[ProfessionModel]:
+    list_value = []
+
+    for schedule in python_obj["professions"]:
+        value = ScheduleModel(
+            name=schedule["name"],
+            vacancy_id=vacancy_id
+        )
+        list_value.append(value)
     return list_value

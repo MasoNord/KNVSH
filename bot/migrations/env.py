@@ -6,6 +6,8 @@ from bot.config import database_url
 from alembic import context
 from bot.dao.database import Base 
 from bot.dao.models import User, Event, MemeberStatus, OrganizerPhone, Period, Coordinate
+from bot.dao.models import Organization, Vacancy, Schedule, MainVacancyCompetency, \
+DesirableVacancyCompetency, PersonalQuality, Profession
 
 config = context.config
 

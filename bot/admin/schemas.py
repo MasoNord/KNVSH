@@ -1,5 +1,6 @@
 
 from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, List
 import datetime
 
 class EventModelTitle(BaseModel):
@@ -64,3 +65,84 @@ class CoordinateModel(CoordinateModelID):
     longitude: str
     latitude: str
     event_id: int | None
+
+class VacancyModelName(BaseModel):
+    name: str
+
+class VacancyModel(BaseModel):
+    name: str
+    employment_type: str | None
+    experience: str | None
+    education_level: str | None
+    salary_from: int | None
+    salary_up_to: int | None
+    before_tax: bool
+    description: str
+    email: str | None
+    contact_name: str | None
+    phone: str | None
+    address: str | None
+    is_blocked: bool
+    published_at: str
+    is_favorite: bool
+    hh_url: str | None
+    
+
+class OrganizationModel(BaseModel):
+    vacancy_id: int | None
+    full_title: str | None
+    full_title_eng: str | None
+    short_title: str | None
+    short_title_eng: str | None
+    description: str | None
+    description_eng: str | None
+    supervisor_fio: str | None
+    supervisor_fio_eng: str | None
+    supervisor_job_title: str | None
+    supervisor_job_title_eng: str | None
+    status: bool | None
+    is_participant: bool | None
+    is_published: bool | None
+    inn: str | None
+    ogrn: str | None
+    address_organization: str | None
+    address_eng: str | None
+    phone: str | None
+    email: str | None
+    vk: str | None
+    telegram: str | None
+    site: str | None
+    logo: str | None
+    cover: str | None
+    created_vacancy_at: str | None
+    updated_vacancy_at: str | None
+    published_at: str | None
+    licenze: str | None
+    accreditation_certificate: str | None
+    educational_type: str | None
+    is_educational: bool | None
+    is_head: bool | None
+    logo: str | None
+    stie: str | None
+    name: str | None
+    address: str | None
+
+class ScheduleModel(BaseModel):    
+    vacancy_id: int 
+    name: str
+
+class MainVacancyCompetencyModel(BaseModel):
+    vacancy_id: int 
+    name: str
+
+class DesirableVacancyCompetencyModel(BaseModel):
+    vacancy_id: int
+    name: str
+
+class PersonalQualityModel(BaseModel):
+    vacancy_id: int
+    name: str
+
+class ProfessionModel(BaseModel):
+    vacancy_id: int
+    name: str

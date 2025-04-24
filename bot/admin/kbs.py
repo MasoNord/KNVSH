@@ -22,9 +22,16 @@ def main_kb() -> InlineKeyboardMarkup:
 
 def add_events_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="✍️ Добавить мероприятние вручную", callback_data = "add_event_manually")
     kb.button(text="📑 Добавить мероприятия через JSON файл", callback_data = "add_events_by_file")
     kb.button(text="🌐 Добавить мероприятия по ссылке на JSON файл", callback_data = "add_events_by_url")
+    kb.button(text="🏠 На главную", callback_data="home")
+    kb.adjust(1)
+    return kb.as_markup()
+
+def add_vacancy_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="📑 Добавить вакансию через JSON файл", callback_data = "add_vacancies_by_file")
+    kb.button(text="🌐 Добавить вакансию по ссылке на JSON файл", callback_data = "add_vacancies_by_url")
     kb.button(text="🏠 На главную", callback_data="home")
     kb.adjust(1)
     return kb.as_markup()
