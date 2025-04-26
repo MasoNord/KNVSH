@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     ADMIN_IDS: List[int]
     FORMAT_LOG: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     LOG_ROTATION: str = "10 MB"
+    MAX_JSON_PAGES_EVENTS: int
+    MAX_JSON_PAGES_VACANCIES: int
+    MAX_ENTITIES_IN_GET_KEYBOARDS: int
     DB_URL: str
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")

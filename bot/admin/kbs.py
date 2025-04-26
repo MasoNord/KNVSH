@@ -47,3 +47,10 @@ def continue_add_new_events() -> InlineKeyboardMarkup:
     kb.button(text="⚙️ Админ панель", callback_data="admin_panel")
     kb.adjust(2)
     return kb.as_markup()
+
+def continue_add_new_vacancies() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Добавить еще", callback_data="add_vacancies")
+    kb.button(text="⚙️ Админ панель", callback_data="admin_panel")
+    kb.adjust(2)
+    return kb.as_markup()

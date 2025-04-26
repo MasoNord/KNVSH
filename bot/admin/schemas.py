@@ -27,7 +27,6 @@ class EventModel(EventModelTitle):
     organizer_vk: str | None
     organizer_telegram: str | None
     organizer_email: str | None
-    free_places: bool | None
     is_active: bool | None
     event_type: str | None
     event_format: str | None
@@ -35,16 +34,13 @@ class EventModel(EventModelTitle):
     location: str | None
     location_eng: str | None
     registration_status: str | None
-    # registration_period: str | None
     registration_comment: str | None
     place_number: str | None
     is_available: bool | None
-    # title: str | None
     title_eng: str | None
     cypher: str | None
     published_at: str | None
     cover_url: str | None
-    parent: bool | None
     typeof: str | None
 
 class MemeberStatusModel(BaseModel):
@@ -88,6 +84,9 @@ class VacancyModel(BaseModel):
     hh_url: str | None
     
 
+class OrganizationModelVacancyId(BaseModel):
+    vacancy_id: int
+
 class OrganizationModel(BaseModel):
     vacancy_id: int | None
     full_title: str | None
@@ -113,7 +112,6 @@ class OrganizationModel(BaseModel):
     telegram: str | None
     site: str | None
     logo: str | None
-    cover: str | None
     created_vacancy_at: str | None
     updated_vacancy_at: str | None
     published_at: str | None

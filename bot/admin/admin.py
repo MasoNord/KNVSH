@@ -4,18 +4,20 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.config import admins
-from bot.admin.kbs import admin_kb, add_events_kb, cancel_kb_inline, continue_add_new_events, add_vacancy_kb
+import logging
+from bot.admin.kbs import admin_kb, add_events_kb, cancel_kb_inline, continue_add_new_events, add_vacancy_kb, continue_add_new_vacancies
 from bot.admin.utils import (
     proecess_get_url_request, create_event_model_from_json, create_period_mode_from_json,
     create_memeber_status_model_from_json, create_vacancy_model_from_json, create_coordinate_model_from_json,
     create_organization_model_from_json, create_schedule_model_from_json, create_main_vacancy_competency_model_from_json,
-    create_desirable_vacancy_competency_model_from_json, create_personal_qualities_model_from_json, create_profession_model_from_json
+    create_desirable_vacancy_competency_model_from_json, create_personal_qualities_model_from_json, create_profession_model_from_json,
 ) 
 from bot.dao.dao import (
     EventDAO, MemeberStatusDAO, CoordinateDAO, PeriodDAO, VacancyDAO,
     OrganizationDAO, ScheduleDAO, MainVacancyCompetencyDAO, DesirableVacancyCompetencyDAO, ProfessionDAO, PersonalQualityDAO
 ) 
 from bot.admin.schemas import EventModelTitle, VacancyModelName
+from bot.config import settings
 
 admin_router = Router()
 
@@ -72,73 +74,62 @@ async def admin_process_add_events_by_url(message: Message, state: FSMContext,  
     await state.update_data(url = message.text.lower())
 
     url = await state.get_data()
-    python_obj = await proecess_get_url_request(url)
+    python_obj = await proecess_get_url_request(url['url'])
 
-# TODO: доделать обработку исключения на неверно введенный юрл
     if python_obj is None:
         return await message.answer(
             text="Что-то пошло не так, попробуйте загрузить ссылку еще раз, либо выбирете другую"
         )
     
-    # while True:
-    #     values = python_obj['results']
-    #     for value in values:
-    #         event = await create_event_model_from_json(value)
-    #         event_instance = await EventDAO.add(session=session_with_commit, values=event)
+    count_pages = 0
 
-    #         periods = await create_period_mode_from_json(value, event_instance.id)
-    #         member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
-    #         coordinates = await create_coordinate_model_from_json(value, event_instance.id)
+    while count_pages < settings.MAX_JSON_PAGES_EVENTS:
+        msg = ""
+        count_records = 0
 
-    #         for period in periods:
-    #             await PeriodDAO.add(session=session_with_commit, values=period)
+        values = python_obj['results']
 
-    #         for member in member_statuses:
-    #             await MemeberStatusDAO.add(session=session_with_commit, values=member)
+        for value in values:
+            event = await create_event_model_from_json(value)
+
+            if await EventDAO.find_one_or_none(session=session_with_commit, filters=EventModelTitle(title=event.title)):
+                msg += f"Мероприятие <b>{event.title}</b> уже существует в базе данных\n"
+                continue
+
+            event_instance = await EventDAO.add(session=session_with_commit, values=event)
+
+            periods = await create_period_mode_from_json(value, event_instance.id)
+            member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
+            coordinates = await create_coordinate_model_from_json(value, event_instance.id)
+
+            for period in periods:
+                await PeriodDAO.add(session=session_with_commit, values=period)
+
+            for member in member_statuses:
+                await MemeberStatusDAO.add(session=session_with_commit, values=member)
             
-    #         for coord in coordinates:
-    #             await CoordinateDAO.add(session=session_with_commit, values=coord)
-
-    #     if python_obj['next'] is not None:
-    #         python_obj = await proecess_get_url_request(python_obj['next'])
-    #     else:
-    #         break
-    
-    values = python_obj['results']
-    count = 0
-    msg = ""
-    for value in values:
-        event = await create_event_model_from_json(value)
-
-        if await EventDAO.find_one_or_none(session=session_with_commit, filters=EventModelTitle(title=event.title)):
-            msg += f"Мероприятие {event.title} уже существует в базе данных\n"
-            continue
-
-        event_instance = await EventDAO.add(session=session_with_commit, values=event)
-
-        periods = await create_period_mode_from_json(value, event_instance.id)
-        member_statuses = await create_memeber_status_model_from_json(value, event_instance.id)
-        coordinates = await create_coordinate_model_from_json(value, event_instance.id)
-
-        for period in periods:
-            await PeriodDAO.add(session=session_with_commit, values=period)
-
-        for member in member_statuses:
-            await MemeberStatusDAO.add(session=session_with_commit, values=member)
+            for coord in coordinates:
+                await CoordinateDAO.add(session=session_with_commit, values=coord)
+            count_records += 1
+            msg += f"Мероприятие <b>{event.title}</b> успешно было доавблено в базу\n"
         
-        for coord in coordinates:
-            await CoordinateDAO.add(session=session_with_commit, values=coord)
+        msg += f"\nВсего добавлнео <b>{count_records}</b> новых мероприятий"
 
-        msg += f"Мероприятие {event.title} успешно было доавблено в базу\n"
-        count += 1
-    msg += f"Всего добавлнео {count} новых мероприятий"
+        count_pages += 1
+        await message.answer(
+            text=msg
+        )
+
+        if python_obj['next'] is not None:
+            logging.info(python_obj['next'], type(python_obj['next']))
+            python_obj = await proecess_get_url_request(python_obj['next'])
+        else:
+            break
     
     await message.answer (
-        text=msg,
+        text=f"Вы достигли лимита добавление JSON страниц: {count_pages} из {settings.MAX_JSON_PAGES_EVENTS}",
         reply_markup=continue_add_new_events()
     )
-
-
 
 # ----------------------------- Добавление новых вакансий -----------------------------
 
@@ -166,60 +157,73 @@ async def admin_process_add_events_by_url(message: Message, state: FSMContext,  
     await state.update_data(url = message.text.lower())
 
     url = await state.get_data()
-    python_obj = await proecess_get_url_request(url)
+    python_obj = await proecess_get_url_request(url['url'])
 
 # TODO: доделать обработку исключения на неверно введенный юрл
     if python_obj is None:
+        await state.set_state(AddVacancy.url)
         return await message.answer(
-            text="Что-то пошло не так, попробуйте загрузить ссылку еще раз, либо выбирете другую"
+            text="Что-то пошло не так, попробуйте загрузить ссылку еще раз, либо выбирете другую",
+            reply_markup=cancel_kb_inline()
         )
     
-    values = python_obj['results']
-    count = 0
-    msg = ""
+    count_pages = 0
+    while count_pages < settings.MAX_JSON_PAGES_VACANCIES:
+        counte_records = 0
+        msg = ""
+        values = python_obj['results']
+        for value in values:
+            print(value["address"])
 
+            vacancy = await create_vacancy_model_from_json(value)
+            if await VacancyDAO.find_one_or_none(session=session_with_commit, filters=VacancyModelName(name=vacancy.name)):
+                msg += f"Вакансия <b>{vacancy.name}</b> уже существует в базе данных\n"
+                continue
 
-    for value in values:
-        print(value["address"])
+            vacancy_instance = await VacancyDAO.add(session=session_with_commit, values=vacancy)
 
-        vacancy = await create_vacancy_model_from_json(value)
-        if await VacancyDAO.find_one_or_none(session=session_with_commit, filters=VacancyModelName(name=vacancy.name)):
-            msg += f"Вакансия {vacancy.name} уже существует в базе данных\n"
-            continue
+            organization = await create_organization_model_from_json(vacancy_instance.id, value["organization"])
+            schedule = await create_schedule_model_from_json(vacancy_instance.id, value)
+            main_vacancy_competency = await create_main_vacancy_competency_model_from_json(vacancy_instance.id, value)
+            desirable_vacancy_competency = await create_desirable_vacancy_competency_model_from_json(vacancy_instance.id, value)
+            personal_qualities = await create_personal_qualities_model_from_json(vacancy_instance.id, value)
+            profession = await create_profession_model_from_json(vacancy_instance.id, value)
 
-        vacancy_instance = await VacancyDAO.add(session=session_with_commit, values=vacancy)
+            await OrganizationDAO.add(session=session_with_commit, values=organization)
+            
+            for sc in schedule:
+                await ScheduleDAO.add(session=session_with_commit, values=sc)
+            
+            for mvc in main_vacancy_competency:
+                await MainVacancyCompetencyDAO.add(session=session_with_commit, values=mvc)
 
-        organization = await create_organization_model_from_json(vacancy_instance.id, value["organization"])
-        schedule = await create_schedule_model_from_json(vacancy_instance.id, value)
-        main_vacancy_competency = await create_main_vacancy_competency_model_from_json(vacancy_instance.id, value)
-        desirable_vacancy_competency = await create_desirable_vacancy_competency_model_from_json(vacancy_instance.id, value)
-        personal_qualities = await create_personal_qualities_model_from_json(vacancy_instance.id, value)
-        profession = await create_profession_model_from_json(vacancy_instance.id, value)
+            for dvc in desirable_vacancy_competency:
+                await DesirableVacancyCompetencyDAO.add(session=session_with_commit, values=dvc)
 
-        await OrganizationDAO.add(session=session_with_commit, values=organization)
+            for pq in personal_qualities:
+                await PersonalQualityDAO.add(session=session_with_commit, values=pq)
+
+            for pr in profession:
+                await ProfessionDAO.add(session=session_with_commit, values=pr)
+            
+            msg += f"Вакансия  <b>{vacancy.name}</b> успешно было доавблено в базу\n"
+            counte_records += 1
+
+        msg += f"\nВсего добавлнео <b>{counte_records}</b> новых вакансий"
         
-        for sc in schedule:
-            await ScheduleDAO.add(session=session_with_commit, values=sc)
+        count_pages += 1
+        await message.answer(
+            text=msg
+        )
         
-        for mvc in main_vacancy_competency:
-            await MainVacancyCompetencyDAO.add(session=session_with_commit, values=mvc)
-
-        for dvc in desirable_vacancy_competency:
-            await DesirableVacancyCompetencyDAO.add(session=session_with_commit, values=dvc)
-
-        for pq in personal_qualities:
-            await PersonalQualityDAO.add(session=session_with_commit, values=pq)
-
-        for pr in profession:
-            await ProfessionDAO.add(session=session_with_commit, values=pr)
-        
-        msg += f"Мероприятие {vacancy.name} успешно было доавблено в базу\n"
-        count += 1
-    
-    msg += f"Всего добавлнео {count} новых мероприятий"
+        if python_obj['next'] is not None:
+            logging.info(python_obj['next'], type(python_obj['next']))
+            python_obj = await proecess_get_url_request(python_obj['next'])
+        else:
+            break
 
     await message.answer (
-        text=msg,
-        reply_markup=continue_add_new_events()
+        text=f"Вы достигли лимита добавление JSON страниц: {count_pages} из {settings.MAX_JSON_PAGES_VACANCIES}",
+        reply_markup=continue_add_new_vacancies()
     )
 

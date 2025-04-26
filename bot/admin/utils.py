@@ -27,7 +27,7 @@ async def process_del_text_message(message: Message, state: FSMContext):
 async def proecess_get_url_request(url: str):
     async with aiohttp.ClientSession() as session:
         try:
-            async with session.get(url['url']) as response:
+            async with session.get(url) as response:
                 if response.status == 404 or response.status == 500:
                     return None
                 html = await response.text()
@@ -49,7 +49,6 @@ async def create_event_model_from_json(python_obj) -> EventModel:
         organizer_vk=python_obj['organizerVk'],
         organizer_telegram=python_obj['organizerTelegram'],
         organizer_email=python_obj['organizerEmail'],
-        free_places=python_obj['freePlaces'],
         event_type=python_obj['type']['name'] if python_obj['type'] is not None else None,
         is_active=python_obj['isActive'],
         event_format=python_obj['eventFormat']['name'] if python_obj['eventFormat'] is not None else None,
@@ -58,14 +57,13 @@ async def create_event_model_from_json(python_obj) -> EventModel:
         location_eng=python_obj['locationEng'],
         registration_status=python_obj['registrationStatus']['name'] if python_obj['registrationStatus'] is not None else None,
         registration_comment=python_obj['registrationComment'],
-        place_number=python_obj['placesNumber'],
+        place_number=str(python_obj['placesNumber']),
         is_available=python_obj['isAvailable'],
         title=python_obj['title'],
         title_eng=python_obj['titleEng'],
         cypher=python_obj['cypher'],
         published_at=python_obj['publishedAt'],
         cover_url=python_obj['cover']['url'] if python_obj['cover'] is not None else None,
-        parent=python_obj['parent'],
         typeof=python_obj['typeof']['name'] if python_obj['typeof'] is not None else None
     )
 
@@ -100,7 +98,10 @@ async def create_period_mode_from_json(python_obj, event_id) -> List[PeriodModel
 
 async def create_coordinate_model_from_json(python_obj, event_id) -> List[CoordinateModel]:
     list_value = []
-
+    
+    if python_obj['coordinates'] is None:
+        return list_value
+    
     for value in python_obj['coordinates']:
         coord = CoordinateModel(
             longitude=str(value[0]),
@@ -157,7 +158,6 @@ async def create_organization_model_from_json(vacancy_id, python_obj) -> Organiz
         vk=python_obj["organization"]["vk"] if python_obj["organization"] else None,
         telegram=python_obj["organization"]["telegram"] if python_obj["organization"] else None,
         site=python_obj["organization"]["site"] if python_obj["organization"] else None,
-        cover=python_obj["organization"]["cover"] if python_obj["organization"] else None,
         created_vacancy_at=python_obj["organization"]["createdAt"] if python_obj["organization"] else None,
         updated_vacancy_at=python_obj["organization"]["updatedAt"] if python_obj["organization"] else None,
         published_at=python_obj["organization"]["publishedAt"] if python_obj["organization"] else None,
