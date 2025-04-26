@@ -67,34 +67,6 @@ class BaseDAO(Generic[T]):
 class UserDAO(BaseDAO[User]):
     model = User
 
-    @classmethod
-    async def get_statistics(cls, session: AsyncSession):
-        try:
-            now = datetime.now(UTC)
-
-            query = select(
-                func.count().label('total_users'),
-                func.sum(case((cls.model.created_at >= now - timedelta(days=1), 1), else_=0)).label('new_today'),
-                func.sum(case((cls.model.created_at >= now - timedelta(days=7), 1), else_=0)).label('new_week'),
-                func.sum(case((cls.model.created_at >= now - timedelta(days=30), 1), else_=0)).label('new_month')
-            )
-
-            result = await session.execute(query)
-            stats = result.fetchone()
-
-            statistics = {
-                'total_users': stats.total_users,
-                'new_today': stats.new_today,
-                'new_week': stats.new_week,
-                'new_month': stats.new_month
-            }
-
-            logging.info(f"Статистика успешно получена: {statistics}")
-            return statistics
-        except SQLAlchemyError as e:
-            logging.error(f"Ошибка при получении статистики: {e}")
-            raise
-
 class EventDAO(BaseDAO[Event]):
     model = Event
 

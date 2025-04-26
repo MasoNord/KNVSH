@@ -4,7 +4,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 def admin_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text="📊 Статистика", callback_data = "statistic")
     kb.button(text="🎟️ Добавить мероприятия", callback_data = "add_events")
     kb.button(text="💼 Добавить вакансии", callback_data = "add_vacancies")
     kb.button(text="🏠 На главную", callback_data="home")
