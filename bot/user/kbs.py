@@ -41,7 +41,6 @@ def get_events_kb(events, start) -> InlineKeyboardMarkup:
     return kb.as_markup()
 
 def get_vacancies_kb(vacancies, start) -> InlineKeyboardMarkup:
-    print(start)
     kb = InlineKeyboardBuilder()
     adjust_elements = []
     for i in range(len(vacancies[start])):
@@ -65,4 +64,16 @@ def get_vacancies_kb(vacancies, start) -> InlineKeyboardMarkup:
     kb.button(text="🏠 На главную", callback_data="home")
 
     kb.adjust(*adjust_elements,3)
+    return kb.as_markup()
+
+def back_to_event_list() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Вернуться к спсику мероприятий", callback_data="get_events")
+    kb.adjust(1)
+    return kb.as_markup()
+
+def back_to_vacancys_list() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text="Вернуться к спсику вакансий", callback_data="get_vacancies")
+    kb.adjust(1)
     return kb.as_markup()

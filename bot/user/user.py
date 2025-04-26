@@ -3,10 +3,11 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.admin.utils import process_del_text_message
-from bot.dao.dao import UserDAO, EventDAO, VacancyDAO
+from bot.dao.dao import UserDAO, EventDAO, VacancyDAO, OrganizationDAO
 from bot.user.schemas import TelegramIDModel, UserModel
-from bot.user.kbs import main_user_kb, get_events_kb, get_vacancies_kb
-from bot.dao.models import Event
+from bot.admin.schemas import EventModelTitle, VacancyModelName, OrganizationModelVacancyId
+from bot.user.kbs import main_user_kb, get_events_kb, get_vacancies_kb, back_to_event_list, back_to_vacancys_list
+from bot.config import settings
 from bot.user.utils import DisplayObjects
 import logging
 
@@ -59,7 +60,7 @@ async def get_events(call: CallbackQuery, session_with_commit: AsyncSession):
     temp = []
 
     for event in events:
-        if len(temp) == 5:
+        if len(temp) == settings.MAX_ENTITIES_IN_GET_KEYBOARDS:
             display.adjust_events.append(temp)
             temp = []
         else:
@@ -111,7 +112,7 @@ async def get_vacancies(call: CallbackQuery, session_with_commit: AsyncSession):
     vacancies = await VacancyDAO.find_all(session=session_with_commit, filters=None)
     temp = []
     for vacancy in vacancies:
-        if len(temp) == 5:
+        if len(temp) == settings.MAX_ENTITIES_IN_GET_KEYBOARDS:
             display.adjust_vacancies.append(temp)
             temp = []
         else:
@@ -153,19 +154,52 @@ async def back_to_list(call: CallbackQuery):
         reply_markup=get_vacancies_kb(vacancies=display.adjust_vacancies, start=display.current_vacancy_index)
     )
 
+@user_router.callback_query(F.data.startswith("get_event_by_"))
+async def get_event(call: CallbackQuery, session_with_commit: AsyncSession):
+    await call.message.delete()
+    key = display.adjust_events[display.current_event_index][int(call.data.split('_')[3])]
+    event = await EventDAO.find_one_or_none(session=session_with_commit, filters=EventModelTitle(title=key))
 
-# @user_router.callback_query(F.data == "back_to_list_denied")
-# async def back_to_list_denied(call: CallbackQuery, current_index: int):
-#     await call.answer("Доступ назад ограничен")
-#     await call.message.answer(
-#         text = "Список доступных мероприятий",
-#         reply_markup=get_events_kb(events=adjust_events, start=current_index)
-#     )
+    msg = ""
+    if event.cover_url:
+        msg = "https://researchinspb.ru" + event.cover_url + "\n"
+    
+    msg += f"""
+<b>{event.title}</b>\n
+<b>Адрес:</b> {event.location}
+<b>Организатор:</b> {event.organizer}
+<b>Формат:</b> {event.event_format}
+<b>Статус:</b> {event.status}
+<b>Тип:</b> {event.typeof}
+    """
+    
+    await call.message.answer(
+        text=msg,
+        reply_markup=back_to_event_list()
+    )
 
-# @user_router.callback_query(F.data == "forward_to_list_denied")
-# async def back_to_list_denied(call: CallbackQuery, current_index: int):
-#     await call.answer("Доступ вперед ограничен")
-#     await call.message.answer(
-#         text = "Список доступных мероприятий",
-#         reply_markup=get_events_kb(events=adjust_events, start=current_index)
-#     )
+@user_router.callback_query(F.data.startswith("get_vacancy_by_"))
+async def get_vacancy(call: CallbackQuery, session_with_commit: AsyncSession):
+    await call.message.delete()
+    index = call.data.split('_')[3]
+    logging.info(index)
+    
+    key = display.adjust_vacancies[display.current_vacancy_index][int(index)]
+    vacancy = await VacancyDAO.find_one_or_none(session=session_with_commit, filters=VacancyModelName(name=key))
+    organization = await OrganizationDAO.find_one_or_none(session=session_with_commit, filters=OrganizationModelVacancyId(vacancy_id=vacancy.id))
+
+
+    msg = f"""
+<b>{vacancy.name}</b>\n
+<b>Тип Занятости:</b> {vacancy.employment_type}
+<b>Опыт Работы:</b> {vacancy.experience}
+<b>Образование:</b> {vacancy.education_level}
+<b>Зарплата:</b> {f"От {vacancy.salary_from}" if vacancy.salary_from else ""} {f"До {vacancy.salary_up_to}" if vacancy.salary_up_to else ""}
+<b>До Налогов:</b> {"Да" if vacancy.before_tax else "Нет"}
+<b>Cайт:</b> {organization.site if organization.site else ""}
+<b>HHru:</b> {vacancy.hh_url}
+    """
+    await call.message.answer(
+        text=msg,
+        reply_markup=back_to_vacancys_list()
+    )
