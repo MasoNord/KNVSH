@@ -6,6 +6,7 @@ from bot.config import bot, admins, dp
 from bot.admin.admin import admin_router
 from bot.user.user import user_router
 
+
 async def set_commands():
     commands = [BotCommand(command='start', description='Старт')]
     await bot.set_my_commands(commands, BotCommandScopeDefault())
@@ -52,7 +53,7 @@ async def main():
     # adjust_events - Список для хранения списков с событимями разбитыми по группам
     try:
         await bot.delete_webhook(drop_pending_updates=True)
-        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types(), current_index=0)
+        await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
         await bot.session.close()
 

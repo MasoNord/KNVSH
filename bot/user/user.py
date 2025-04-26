@@ -3,13 +3,16 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 from bot.admin.utils import process_del_text_message
-from bot.dao.dao import UserDAO, EventDAO
+from bot.dao.dao import UserDAO, EventDAO, VacancyDAO
 from bot.user.schemas import TelegramIDModel, UserModel
-from bot.user.kbs import main_user_kb, get_events_kb
+from bot.user.kbs import main_user_kb, get_events_kb, get_vacancies_kb
 from bot.dao.models import Event
+from bot.user.utils import DisplayObjects
+import logging
 
 user_router = Router()
-adjust_events = []
+display = DisplayObjects(adjust_vacancies=[], adjust_events=[], current_event_index=0, current_vacancy_index=0)
+
 
 @user_router.message(CommandStart())
 async def cmd_start(message: Message, session_with_commit: AsyncSession):
@@ -47,44 +50,109 @@ async def home(call: CallbackQuery):
     )
 
 @user_router.callback_query(F.data == "get_events")
-async def get_events(call: CallbackQuery, session_with_commit: AsyncSession, current_index: int):
+async def get_events(call: CallbackQuery, session_with_commit: AsyncSession):
+    user_id = call.from_user.id
     await call.message.delete()
+    display.adjust_events.clear()
+
     events = await EventDAO.find_all(session=session_with_commit, filters=None)
     temp = []
+
     for event in events:
         if len(temp) == 5:
-            adjust_events.append(temp)
+            display.adjust_events.append(temp)
             temp = []
         else:
             temp.append(event.title)
     
-    if len(temp) != 0: adjust_events.append(temp)
+    if len(temp) != 0: display.adjust_events.append(temp)
+
+    if len(display.adjust_events) == 0:
+        await call.message.answer(
+            text="Упс! Походу на данный момент нет активных мероприятий, попрбуйте посмотреть позже!",
+            reply_markup=main_user_kb(user_id)
+        )
+
     await call.message.answer(
         text = "Список доступных мероприятий",
-        reply_markup=get_events_kb(events=adjust_events, start=current_index)
+        reply_markup=get_events_kb(events=display.adjust_events, start=display.current_event_index)
     )
 
-@user_router.callback_query(F.data == "forward_to_list")
-async def forward_to_list(call: CallbackQuery, current_index: int):
+@user_router.callback_query(F.data == "forward_to_list_events")
+async def forward_to_list(call: CallbackQuery):
     await call.message.delete()
-    if (current_index + 1) != len(adjust_events):
-        current_index += 1
+    if (display.current_event_index + 1) < len(display.adjust_events):
+        display.current_event_index += 1
 
     await call.message.answer(
         text = "Список доступных мероприятий",
-        reply_markup=get_events_kb(events=adjust_events, start=current_index)
+        reply_markup=get_events_kb(events=display.adjust_events, start=display.current_event_index)
     )
 
-@user_router.callback_query(F.data == "back_to_list")
-async def back_to_list(call: CallbackQuery, current_index: int):
+@user_router.callback_query(F.data == "back_to_list_events")
+async def back_to_list(call: CallbackQuery):
     await call.message.delete()
-    if (current_index - 1) != -1:
-        current_index -= 1
+
+    if (display.current_event_index - 1) > -1:
+        display.current_event_index -= 1
 
     await call.message.answer(
         text = "Список доступных мероприятий",
-        reply_markup=get_events_kb(events=adjust_events, start=current_index)
+        reply_markup=get_events_kb(events=display.adjust_events, start=display.current_event_index)
     )
+
+@user_router.callback_query(F.data == "get_vacancies")
+async def get_vacancies(call: CallbackQuery, session_with_commit: AsyncSession):
+    user_id = call.from_user.id
+    await call.message.delete()
+
+    display.adjust_vacancies.clear()
+
+    vacancies = await VacancyDAO.find_all(session=session_with_commit, filters=None)
+    temp = []
+    for vacancy in vacancies:
+        if len(temp) == 5:
+            display.adjust_vacancies.append(temp)
+            temp = []
+        else:
+            if vacancy.name not in display.adjust_vacancies:
+                temp.append(vacancy.name)
+    
+    if len(temp) != 0: display.adjust_vacancies.append(temp)
+
+    if len(display.adjust_vacancies) == 0:
+        await call.message.answer(
+            text="Упс! Походу на данный момент нет активных вакансий, попрбуйте посмотреть позже!",
+            reply_markup=main_user_kb(user_id)
+        )
+
+    await call.message.answer(
+        text = "Список доступных мероприятий",
+        reply_markup=get_vacancies_kb(vacancies=display.adjust_vacancies, start=display.current_vacancy_index)
+    )
+
+@user_router.callback_query(F.data == "forward_to_list_vacancies")
+async def forward_to_list(call: CallbackQuery):
+    await call.message.delete()
+    if (display.current_vacancy_index + 1) != len(display.adjust_vacancies):
+        display.current_vacancy_index += 1
+
+    await call.message.answer(
+        text = "Список доступных мероприятий",
+        reply_markup=get_vacancies_kb(vacancies=display.adjust_vacancies, start=display.current_vacancy_index)
+    )
+
+@user_router.callback_query(F.data == "back_to_list_vacancies")
+async def back_to_list(call: CallbackQuery):
+    await call.message.delete()
+    if (display.current_vacancy_index - 1) != -1:
+        display.current_vacancy_index -= 1
+
+    await call.message.answer(
+        text = "Список доступных мероприятий",
+        reply_markup=get_vacancies_kb(vacancies=display.adjust_vacancies, start=display.current_vacancy_index)
+    )
+
 
 # @user_router.callback_query(F.data == "back_to_list_denied")
 # async def back_to_list_denied(call: CallbackQuery, current_index: int):
