@@ -59,6 +59,7 @@ async def add_events(call: CallbackQuery):
 
 @admin_router.callback_query(F.data == "add_events_by_file", F.from_user.id.in_(admins))
 async def add_event_by_file(call: CallbackQuery):
+    await call.message.delete()
     await call.message.answer(
         text="Данная функция находится на стадии разработки",
         reply_markup=admin_kb()
@@ -146,6 +147,14 @@ async def add_events(call: CallbackQuery):
     await call.message.edit_text(
         text="Для добавления новых вакансий выберите удобный для вас способ",
         reply_markup = add_vacancy_kb()
+    )
+
+@admin_router.callback_query(F.data == "add_vacancies_by_file", F.from_user.id.in_(admins))
+async def add_event_by_file(call: CallbackQuery):
+    await call.message.delete()
+    await call.message.answer(
+        text="Данная функция находится на стадии разработки",
+        reply_markup=admin_kb()
     )
 
 @admin_router.callback_query(F.data == "add_vacancies_by_url", F.from_user.id.in_(admins))
